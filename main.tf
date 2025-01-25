@@ -29,3 +29,13 @@ module "ec2_instances" {
   # target_group_arn = aws_lb_target_group.target_group.arn
   # target_port    = 80
 }
+
+module "lb" {
+  source               = "./aws-modules/load-balancer"
+  project_name         = var.project_name
+  vpc_id               = module.vpc.vpc_id
+  public_subnets_ids   = module.vpc.public_subnets_ids
+  lb_security_group_id = module.ec2_instances.sg_for_elb_eks_id
+  
+  instance_ids         = module.ec2_instances.instance_ids
+}

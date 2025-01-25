@@ -36,7 +36,7 @@ resource "aws_security_group" "ec2_sg" {
 
 
 resource "aws_security_group" "sg_for_elb_eks" {
-  name   = "demo-eks-project"
+  name   = "demo-eks-project-lb-sg"
   vpc_id = var.vpc_id
 
   ingress {
@@ -65,6 +65,6 @@ resource "aws_security_group" "sg_for_elb_eks" {
   }
 
   tags = {
-    Name = "wordpress-load-balancer-sg"
+    Name = "eks-load-balancer-sg"
   }
 }
