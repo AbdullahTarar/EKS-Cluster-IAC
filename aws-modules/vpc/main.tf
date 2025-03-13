@@ -92,3 +92,74 @@ resource "aws_route_table_association" "private_subnet_association" {
   subnet_id      = aws_subnet.private_subnets[count.index].id
   route_table_id = aws_route_table.private_rt.id
 }
+
+# Security Group for EC2 Instances
+resource "aws_security_group" "ec2_sg" {
+  name_prefix = "${var.project_name}-ec2-sg"
+  vpc_id      = aws_vpc.eks_vpc.id
+
+
+  # Allow HTTP
+  ingress {
+    from_port   = var.http-port
+    to_port     = var.http-port
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    # cidr_blocks = [sg_for_elb_eks.id]
+  }
+
+  ingress {
+    from_port   = var.https-port
+    to_port     = var.https-port
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    # cidr_blocks = [sg_for_elb_eks.id]
+  }
+
+
+  # Allow all outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-ec2-sg"
+  }
+}
+
+resource "aws_security_group" "sg_for_elb_eks" {
+  name   = "demo-eks-project-lb-sg"
+  vpc_id = aws_vpc.eks_vpc.id
+
+  ingress {
+    description      = "Allow http request from anywhere"
+    protocol         = "tcp"
+    from_port        = var.http-port
+    to_port          = var.http-port
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  ingress {
+    description      = "Allow https request from anywhere"
+    protocol         = "tcp"
+    from_port        = var.https-port
+    to_port          = var.https-port
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "eks-load-balancer-sg"
+  }
+}

@@ -24,3 +24,22 @@ variable "project_name" {
   description = "Name of the project"
   type        = string
 }
+
+
+variable "http-port" {
+  description = "port for http access"
+  type        = string
+}
+
+variable "https-port" {
+  description = "port for https access"
+  type        = string
+}
+variable "ssh-port" {
+  description = "port for ssh access"
+  type        = string
+}
+
+
+
+

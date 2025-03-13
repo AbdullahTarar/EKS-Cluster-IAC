@@ -23,10 +23,10 @@ variable "lb_security_group_id" {
 #   type        = string
 # }
 
-variable "instance_ids" {
-  description = "List of instance IDs to register in the target group"
-  type        = list(string)
-}
+# variable "instance_ids" {
+#   description = "List of instance IDs to register in the target group"
+#   type        = list(string)
+# }
 variable "instance_count" {
   description = "Number of EC2 instances to create"
   type        = number

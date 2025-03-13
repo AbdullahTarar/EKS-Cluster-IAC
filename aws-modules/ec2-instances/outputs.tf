@@ -6,3 +6,8 @@ output "instance_ids" {
   description = "The IDs of the private subnets"
   value       = aws_instance.ec2_instances.*.id
 }
+
+output "ec2_sg_id" {
+  description = "The IDs of the private subnets"
+  value       = module.ec2_instances.ec2_sg.id
+}

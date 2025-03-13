@@ -73,10 +73,6 @@ variable "instance_type" {
   type        = string
   default     = "t2.micro"
 }
-variable "key_name" {
-  description = "Key name for the EC2 instances"
-  type        = string
-}
 
 variable "http-port" {
   description = "port for http access"
@@ -92,7 +88,18 @@ variable "ssh-port" {
   type        = string
 }
 
-variable "all_cidr" {
-  description = "Allow access from all IPs"
-  type = string
+#---------------------------------------------------------
+# EKS Variables 
+#---------------------------------------------------------
+variable "cluster_name" {
+    description = "Name of the eks cluster"
+    type = string
 }
+
+variable "cluster_version" {
+    description = "Version of the eks cluster"
+    type = string
+}
+
+
+

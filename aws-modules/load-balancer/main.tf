@@ -48,9 +48,9 @@ resource "aws_lb_target_group" "eks_target_group" {
 #     matcher             = "200"
 #   }
 }
-resource "aws_lb_target_group_attachment" "instance_attachments" {
-  count             = var.instance_count 
-  target_group_arn  = aws_lb_target_group.eks_target_group.arn
-  target_id         = var.instance_ids[count.index]
-  port              = 80
-}
+# resource "aws_lb_target_group_attachment" "instance_attachments" {
+#   count             = var.instance_count 
+#   target_group_arn  = aws_lb_target_group.eks_target_group.arn
+#   target_id         = var.instance_ids[count.index]
+#   port              = 80
+# }
