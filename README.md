@@ -1,2 +1,2 @@
-# IAC-Multi-Cloud-Disaster-Recovery
+# IAC-AWS-Multi-Cloud-Disaster-Recovery
 This repo will have all the terraform code for multicloud disaster recovery infrastructure.
