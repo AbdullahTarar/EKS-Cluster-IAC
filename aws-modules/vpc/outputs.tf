@@ -11,10 +11,10 @@ output "public_subnets_ids" {
   value       = aws_subnet.public_subnets[*].id
 }
 
-output "sg_for_elb_eks_id" {
-  description = "security group id for lb"
-  value       = aws_security_group.sg_for_elb_eks.id
-}
+# output "sg_for_elb_eks_id" {
+#   description = "security group id for lb"
+#   value       = aws_security_group.sg_for_elb_eks.id
+# }
 output "ec2_sg_id" {
   description = "The IDs of the private subnets"
   value       = aws_security_group.ec2_sg.id
