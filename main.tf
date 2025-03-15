@@ -34,8 +34,8 @@ module "vpc" {
     eks_managed_node_groups = {
       green = {
         min_size     = 1
-        max_size     = 2
-        desired_size = 1
+        max_size     = 3
+        desired_size = 2
 
         instance_types = ["t2.micro"]
         capacity_type  = "SPOT"
@@ -86,6 +86,11 @@ resource "helm_release" "lb" {
   ]
 
   set {
+    name  = "clusterName"
+    value = var.cluster_name
+  }
+
+  set {
     name  = "region"
     value = "us-east-1"
   }
@@ -110,10 +115,7 @@ resource "helm_release" "lb" {
     value = "aws-load-balancer-controller"
   }
 
-  set {
-    name  = "clusterName"
-    value = var.cluster_name
-  }
+
 }
 
 
