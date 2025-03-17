@@ -32,9 +32,9 @@ module "eks" {
 
   eks_managed_node_groups = {
     green = {
-      min_size     = 1
-      max_size     = 3
-      desired_size = 2
+      min_size     = 2
+      max_size     = 4
+      desired_size = 3
       instance_types = ["t2.micro"]
       capacity_type  = "SPOT"
     }
@@ -111,12 +111,12 @@ resource "helm_release" "lb" {
 }
 
 
-### **Helm Release for Node.js App**
 resource "helm_release" "node_app" {
   name       = "node-app"
   repository = "https://abdullahtarar.github.io/node-app-helm/"
   chart      = "node-app"
   namespace  = "default"
+  version = "0.1.2"
 
   set {
     name  = "replicaCount"
@@ -125,7 +125,7 @@ resource "helm_release" "node_app" {
 
   set {
     name  = "service.type"
-    value = "LoadBalancer"
+    value = "NodePort"
   }
 
   set {
@@ -165,3 +165,4 @@ resource "helm_release" "node_app" {
 
   depends_on = [module.eks] # ✅ FIXED
 }
+
