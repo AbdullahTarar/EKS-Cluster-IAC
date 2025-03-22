@@ -32,137 +32,210 @@ module "eks" {
 
   eks_managed_node_groups = {
     green = {
-      min_size     = 2
-      max_size     = 4
-      desired_size = 3
-      instance_types = ["t2.micro"]
+      min_size     = 1
+      max_size     = 3
+      desired_size = 2
+      instance_types = ["t3.small"]
       capacity_type  = "SPOT"
     }
   }
 }
 
-module "lb_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+resource "aws_eks_addon" "pod_identity" {
+  cluster_name = module.eks.cluster_name
+  addon_name   = "eks-pod-identity-agent"
+  addon_version = "v1.3.5-eksbuild.2"
+  
+}
 
-  role_name = "${var.cluster_name}-eks-lb"
-  attach_load_balancer_controller_policy = true
 
-  oidc_providers = {
-    main = {
-      provider_arn = module.eks.oidc_provider
-      namespace_service_accounts = ["kube-system:aws-load-balancer-controller"]
+data "aws_iam_policy_document" "aws_lbc" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["pods.eks.amazonaws.com"]
     }
+
+    actions = [
+      "sts:AssumeRole",
+      "sts:TagSession"
+    ]
   }
 }
 
-resource "kubernetes_service_account" "service-account" {
-  metadata {
-    name      = "aws-load-balancer-controller"
-    namespace = "kube-system"
-    labels = {
-      "app.kubernetes.io/name"      = "aws-load-balancer-controller"
-      "app.kubernetes.io/component" = "controller"
-    }
-    annotations = {
-      "eks.amazonaws.com/role-arn" = module.lb_role.iam_role_arn
-      "eks.amazonaws.com/sts-regional-endpoints" = "true"
-    }
-  }
+resource "aws_iam_role" "aws_lbc" {
+  name               = "${module.eks.cluster_name}-aws-lbc"
+  assume_role_policy = data.aws_iam_policy_document.aws_lbc.json
 }
 
-resource "helm_release" "lb" {
-  name       = "aws-load-balancer-controller"
+resource "aws_iam_policy" "aws_lbc" {
+  policy = file("./iam/AWSLoadBalancerController.json")
+  name   = "AWSLoadBalancerController"
+}
+
+resource "aws_iam_role_policy_attachment" "aws_lbc" {
+  policy_arn = aws_iam_policy.aws_lbc.arn
+  role       = aws_iam_role.aws_lbc.name
+}
+
+resource "aws_eks_pod_identity_association" "aws_lbc" {
+  cluster_name    = module.eks.cluster_name
+  namespace       = "kube-system"
+  service_account = "aws-load-balancer-controller"
+  role_arn        = aws_iam_role.aws_lbc.arn
+}
+
+resource "helm_release" "aws_lbc" {
+  name = "aws-load-balancer-controller"
+
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
   namespace  = "kube-system"
-  version    = "1.4.1"
-
-  depends_on = [kubernetes_service_account.service-account]
+  version    = "1.7.2"
 
   set {
     name  = "clusterName"
-    value = var.cluster_name
-  }
-
-  set {
-    name  = "region"
-    value = "us-east-1"
-  }
-
-  set {
-    name  = "vpcId"
-    value = module.vpc.vpc_id
-  }
-
-  set {
-    name  = "image.repository"
-    value = "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon/aws-load-balancer-controller"
-  }
-
-  set {
-    name  = "serviceAccount.create"
-    value = "false"
+    value = module.eks.cluster_name
   }
 
   set {
     name  = "serviceAccount.name"
     value = "aws-load-balancer-controller"
   }
+  set {
+    name  = "vpcId"
+    value = module.vpc.vpc_id
+  }
+
+  depends_on = [module.eks]
 }
 
+# module "lb_role" {
+#   source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
 
-resource "helm_release" "node_app" {
-  name       = "node-app"
-  repository = "https://abdullahtarar.github.io/node-app-helm/"
-  chart      = "node-app"
-  namespace  = "default"
-  version = "0.1.2"
+#   role_name = "${var.cluster_name}-eks-lb"
+#   attach_load_balancer_controller_policy = true
 
-  set {
-    name  = "replicaCount"
-    value = 2
-  }
+#   oidc_providers = {
+#     main = {
+#       provider_arn = module.eks.oidc_provider
+#       namespace_service_accounts = ["kube-system:aws-load-balancer-controller"]
+#     }
+#   }
+# }
 
-  set {
-    name  = "service.type"
-    value = "NodePort"
-  }
-
-  set {
-    name  = "image.repository"
-    value = "abdullahtarar222/demo-node-app"
-  }
-
-  set {
-    name  = "image.tag"
-    value = "directory-app"
-  }
-
-  set {
-    name  = "autoscaling.enabled"
-    value = "false"
-  }
-
-  set {
-    name  = "serviceAccount.create"
-    value = "true"
-  }
-
-  set {
-    name  = "serviceAccount.name"
-    value = "node-app-sa"
-  }
-
-    set {
-    name  = "ingress.enabled"
-    value = "true"
-  }
-    set {
-    name  = "ingress.className"
-    value = "alb"
-  }
+# resource "kubernetes_service_account" "service-account" {
+#   metadata {
+#     name      = "aws-load-balancer-controller"
+#     namespace = "kube-system"
+#     labels = {
+#       "app.kubernetes.io/name"      = "aws-load-balancer-controller"
+#       "app.kubernetes.io/component" = "controller"
+#     }
+#     annotations = {
+#       "eks.amazonaws.com/role-arn" = module.lb_role.iam_role_arn
+#       "eks.amazonaws.com/sts-regional-endpoints" = "true"
+#     }
+#   }
+# }
 
 
-  depends_on = [module.eks] # ✅ FIXED
-}
+
+# resource "helm_release" "lb" {
+#   name       = "aws-load-balancer-controller"
+#   repository = "https://aws.github.io/eks-charts"
+#   chart      = "aws-load-balancer-controller"
+#   namespace  = "kube-system"
+#   version    = "1.4.1"
+
+#   depends_on = [kubernetes_service_account.service-account]
+
+#   set {
+#     name  = "clusterName"
+#     value = var.cluster_name
+#   }
+
+#   set {
+#     name  = "region"
+#     value = "us-east-1"
+#   }
+
+#   set {
+#     name  = "vpcId"
+#     value = module.vpc.vpc_id
+#   }
+
+#   set {
+#     name  = "image.repository"
+#     value = "602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon/aws-load-balancer-controller"
+#   }
+
+#   set {
+#     name  = "serviceAccount.create"
+#     value = "false"
+#   }
+
+#   set {
+#     name  = "serviceAccount.name"
+#     value = "aws-load-balancer-controller"
+#   }
+# }
+
+
+# resource "helm_release" "node_app" {
+#   name       = "node-app"
+#   repository = "https://abdullahtarar.github.io/node-app-helm/"
+#   chart      = "node-app"
+#   namespace  = "default"
+#   version = "0.1.2"
+
+#   set {
+#     name  = "replicaCount"
+#     value = 2
+#   }
+
+#   set {
+#     name  = "service.type"
+#     value = "NodePort"
+#   }
+
+#   set {
+#     name  = "image.repository"
+#     value = "abdullahtarar222/demo-node-app"
+#   }
+
+#   set {
+#     name  = "image.tag"
+#     value = "directory-app"
+#   }
+
+#   set {
+#     name  = "autoscaling.enabled"
+#     value = "false"
+#   }
+
+#   set {
+#     name  = "serviceAccount.create"
+#     value = "true"
+#   }
+
+#   set {
+#     name  = "serviceAccount.name"
+#     value = "node-app-sa"
+#   }
+
+#     set {
+#     name  = "ingress.enabled"
+#     value = "true"
+#   }
+#     set {
+#     name  = "ingress.className"
+#     value = "alb"
+#   }
+
+
+#   depends_on = [module.eks] # ✅ FIXED
+# }
 
