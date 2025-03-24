@@ -8,6 +8,7 @@ module "vpc" {
   ssh-port               = var.ssh-port
   http-port              = var.http-port
   https-port             = var.https-port
+  cluster_name = var.cluster_name
 }
 
 module "eks" {
