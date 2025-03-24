@@ -184,58 +184,76 @@ resource "helm_release" "aws_lbc" {
 # }
 
 
-# resource "helm_release" "node_app" {
-#   name       = "node-app"
-#   repository = "https://abdullahtarar.github.io/node-app-helm/"
-#   chart      = "node-app"
-#   namespace  = "default"
-#   version = "0.1.2"
+resource "helm_release" "node_app" {
+  name       = "node-app"
+  repository = "https://abdullahtarar.github.io/node-app-helm/"
+  chart      = "node-app"
+  namespace  = "default"
+  version    = "0.1.5"
 
-#   set {
-#     name  = "replicaCount"
-#     value = 2
-#   }
+  set {
+    name  = "replicaCount"
+    value = 2
+  }
 
-#   set {
-#     name  = "service.type"
-#     value = "NodePort"
-#   }
+  set {
+    name  = "image.repository"
+    value = "abdullahtarar222/demo-node-app"
+  }
 
-#   set {
-#     name  = "image.repository"
-#     value = "abdullahtarar222/demo-node-app"
-#   }
+  set {
+    name  = "image.tag"
+    value = "directory-app"
+  }
 
-#   set {
-#     name  = "image.tag"
-#     value = "directory-app"
-#   }
+  set {
+    name  = "image.pullPolicy"
+    value = "Always"
+  }
 
-#   set {
-#     name  = "autoscaling.enabled"
-#     value = "false"
-#   }
+  set {
+    name  = "service.type"
+    value = "LoadBalancer"
+  }
 
-#   set {
-#     name  = "serviceAccount.create"
-#     value = "true"
-#   }
+  set {
+    name  = "service.port"
+    value = 80
+  }
 
-#   set {
-#     name  = "serviceAccount.name"
-#     value = "node-app-sa"
-#   }
+  set {
+    name  = "service.targetPort"
+    value = 5000
+  }
 
-#     set {
-#     name  = "ingress.enabled"
-#     value = "true"
-#   }
-#     set {
-#     name  = "ingress.className"
-#     value = "alb"
-#   }
+  set {
+    name  = "service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-type"
+    value = "external"
+  }
 
+  set {
+    name  = "service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-nlb-target-type"
+    value = "ip"
+  }
 
-#   depends_on = [module.eks] # ✅ FIXED
-# }
+  set {
+    name  = "service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-scheme"
+    value = "internet-facing"
+  }
+
+  set {
+    name  = "autoscaling.enabled"
+    value = "false"
+  }
+  set {
+    name  = "serviceAccount.create"
+    value = "false"
+  }
+  set {
+    name  = "ingress.enabled"
+    value = "false"
+  }
+
+  depends_on = [module.eks]
+}
 

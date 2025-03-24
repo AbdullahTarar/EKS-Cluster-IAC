@@ -40,7 +40,10 @@ variable "ssh-port" {
   type        = string
 }
 
-
+variable "cluster_name" {
+    description = "Name of the eks cluster"
+    type = string
+}
 
 
 
